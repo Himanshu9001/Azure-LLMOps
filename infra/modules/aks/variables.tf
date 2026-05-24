@@ -1,0 +1,10 @@
+variable "resource_group_name"        { type = string }
+variable "location"                   { type = string }
+variable "environment"                { type = string }
+variable "aks_subnet_id"              { type = string }
+variable "system_node_count"          { type = number }
+variable "cpu_node_min"               { type = number }
+variable "cpu_node_max"               { type = number }
+variable "gpu_node_min"               { type = number }
+variable "gpu_node_max"               { type = number }
+variable "tags"                       { type = map(string) }
