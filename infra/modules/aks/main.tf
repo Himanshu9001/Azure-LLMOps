@@ -69,7 +69,7 @@ resource "azurerm_kubernetes_cluster" "main" {
 resource "azurerm_kubernetes_cluster_node_pool" "cpu" {
   name                  = "cpu"
   kubernetes_cluster_id = azurerm_kubernetes_cluster.main.id
-  vm_size               = "Standard_DC4s_v3"
+  vm_size               = "Standard_DS3_v2"
   vnet_subnet_id        = var.aks_subnet_id
   enable_auto_scaling   = true
   min_count             = 0

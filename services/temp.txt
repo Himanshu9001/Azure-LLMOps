@@ -1,0 +1,4 @@
+export TF_VAR_subscription_id="e56f284c-4b28-4a6a-a473-12e5eaea726e"
+export TF_VAR_postgresql_password="LlmOps@Secure2024!"
+export TF_VAR_huggingface_token="hf_placeholder"
+export TF_VAR_langfuse_secret="langfuse_placeholder"

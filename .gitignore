@@ -216,3 +216,8 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+infra/live/prod/terraform.tfvars
+infra/live/dev/terraform.tfvars
+*.tfstate
+*.tfstate.backup
+.terraform/
