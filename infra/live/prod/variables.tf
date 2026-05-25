@@ -13,7 +13,7 @@ variable "environment" {
 variable "location" {
   description = "Azure region"
   type        = string
-  default     = "eastus"
+  default     = "canadacentral"
 }
 
 variable "postgresql_password" {
@@ -57,4 +57,14 @@ variable "aks_gpu_node_min" {
 variable "aks_gpu_node_max" {
   type    = number
   default = 2
+}
+variable "allowed_ip" {
+  description = "Local IP for Terraform bootstrap storage access"
+  type        = string
+  default     = ""
+}
+variable "postgresql_location" {
+  description = "Region for PostgreSQL - canadacentral avoids eastus restrictions"
+  type        = string
+  default     = "canadacentral"
 }

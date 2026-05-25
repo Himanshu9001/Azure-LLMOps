@@ -11,6 +11,7 @@ resource "azurerm_subnet" "aks" {
   resource_group_name  = var.resource_group_name
   virtual_network_name = azurerm_virtual_network.main.name
   address_prefixes     = ["10.1.0.0/16"]
+  service_endpoints    = ["Microsoft.KeyVault", "Microsoft.Storage"]
 }
 
 resource "azurerm_subnet" "private_endpoints" {
@@ -84,4 +85,21 @@ resource "azurerm_private_dns_zone_virtual_network_link" "storage" {
   private_dns_zone_name = azurerm_private_dns_zone.storage.name
   virtual_network_id    = azurerm_virtual_network.main.id
   registration_enabled  = false
+}
+
+resource "azurerm_subnet" "postgresql" {
+  name                 = "snet-postgresql"
+  resource_group_name  = var.resource_group_name
+  virtual_network_name = azurerm_virtual_network.main.name
+  address_prefixes     = ["10.2.1.0/24"]
+
+  delegation {
+    name = "postgresql-delegation"
+    service_delegation {
+      name = "Microsoft.DBforPostgreSQL/flexibleServers"
+      actions = [
+        "Microsoft.Network/virtualNetworks/subnets/join/action"
+      ]
+    }
+  }
 }

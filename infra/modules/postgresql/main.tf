@@ -5,16 +5,13 @@ resource "azurerm_postgresql_flexible_server" "main" {
   version                       = "16"
   administrator_login           = "llmopsadmin"
   administrator_password        = var.postgresql_password
-  sku_name                      = var.sku_name
+  sku_name                      = "B_Standard_B1ms"
   storage_mb                    = var.storage_mb
-  delegated_subnet_id           = var.postgresql_subnet_id
-  private_dns_zone_id           = var.postgresql_private_dns_zone_id
-  backup_retention_days         = 30
-  geo_redundant_backup_enabled  = true
+  backup_retention_days         = 7
+  geo_redundant_backup_enabled  = false
+  public_network_access_enabled = false
 
-  high_availability {
-    mode = "ZoneRedundant"
-  }
+
 
   tags = var.tags
 }
@@ -37,4 +34,11 @@ resource "azurerm_postgresql_flexible_server_database" "vectorstore" {
   server_id = azurerm_postgresql_flexible_server.main.id
   collation = "en_US.utf8"
   charset   = "utf8"
+}
+
+resource "azurerm_postgresql_flexible_server_firewall_rule" "terraform_caller" {
+  name             = "allow-terraform-caller"
+  server_id        = azurerm_postgresql_flexible_server.main.id
+  start_ip_address = var.allowed_ip != "" ? var.allowed_ip : "0.0.0.0"
+  end_ip_address   = var.allowed_ip != "" ? var.allowed_ip : "255.255.255.255"
 }

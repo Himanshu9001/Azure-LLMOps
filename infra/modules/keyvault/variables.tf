@@ -15,3 +15,8 @@ variable "langfuse_secret" {
   sensitive = true
 }
 variable "tags" { type = map(string) }
+variable "allowed_ip" {
+  description = "Local IP for Terraform bootstrap access"
+  type        = string
+  default     = ""
+}

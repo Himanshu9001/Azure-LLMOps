@@ -18,12 +18,12 @@ resource "azurerm_kubernetes_cluster" "main" {
   resource_group_name = var.resource_group_name
   location            = var.location
   dns_prefix          = "llmops-${var.environment}"
-  kubernetes_version  = "1.29"
+  
 
   default_node_pool {
     name                         = "system"
     node_count                   = var.system_node_count
-    vm_size                      = "Standard_D4s_v3"
+    vm_size                      = "Standard_DC2s_v3"
     vnet_subnet_id               = var.aks_subnet_id
     type                         = "VirtualMachineScaleSets"
     only_critical_addons_enabled = true
@@ -69,10 +69,10 @@ resource "azurerm_kubernetes_cluster" "main" {
 resource "azurerm_kubernetes_cluster_node_pool" "cpu" {
   name                  = "cpu"
   kubernetes_cluster_id = azurerm_kubernetes_cluster.main.id
-  vm_size               = "Standard_D8s_v3"
+  vm_size               = "Standard_DC4s_v3"
   vnet_subnet_id        = var.aks_subnet_id
   enable_auto_scaling   = true
-  min_count             = var.cpu_node_min
+  min_count             = 0
   max_count             = var.cpu_node_max
   os_disk_size_gb       = 128
   os_disk_type          = "Managed"

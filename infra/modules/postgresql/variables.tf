@@ -1,8 +1,6 @@
 variable "resource_group_name"            { type = string }
 variable "location"                       { type = string }
 variable "environment"                    { type = string }
-variable "postgresql_subnet_id"           { type = string }
-variable "postgresql_private_dns_zone_id" { type = string }
 variable "sku_name" {
   type    = string
   default = "GP_Standard_D2s_v3"
@@ -16,3 +14,8 @@ variable "postgresql_password" {
   sensitive = true
 }
 variable "tags" { type = map(string) }
+variable "allowed_ip" {
+  description = "Local IP for bootstrap access"
+  type        = string
+  default     = ""
+}

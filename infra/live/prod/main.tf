@@ -14,7 +14,7 @@ terraform {
 
   backend "azurerm" {
     resource_group_name  = "rg-llmops-tfstate"
-    storage_account_name = "llmopstfstate"
+    storage_account_name = "llmopshs825412"
     container_name       = "tfstate"
     key                  = "prod/terraform.tfstate"
   }
@@ -29,7 +29,7 @@ provider "azurerm" {
       prevent_deletion_if_contains_resources = true
     }
   }
-  subscription_id = var.subscription_id
+  subscription_id                 = var.subscription_id
 }
 
 provider "azuread" {}
@@ -66,50 +66,51 @@ module "acr" {
 }
 
 module "keyvault" {
-  source                     = "../../modules/keyvault"
-  resource_group_name        = azurerm_resource_group.main.name
-  location                   = var.location
-  environment                = var.environment
-  aks_subnet_id              = module.networking.aks_subnet_id
-  postgresql_password        = var.postgresql_password
-  huggingface_token          = var.huggingface_token
-  langfuse_secret            = var.langfuse_secret
-  tags                       = local.common_tags
+  source              = "../../modules/keyvault"
+  resource_group_name = azurerm_resource_group.main.name
+  location            = var.location
+  environment         = var.environment
+  aks_subnet_id       = module.networking.aks_subnet_id
+  postgresql_password = var.postgresql_password
+  huggingface_token   = var.huggingface_token
+  langfuse_secret     = var.langfuse_secret
+  allowed_ip          = var.allowed_ip
+  tags                = local.common_tags
 }
 
 module "storage" {
-  source                       = "../../modules/storage"
-  resource_group_name          = azurerm_resource_group.main.name
-  location                     = var.location
-  environment                  = var.environment
-  private_endpoint_subnet_id   = module.networking.private_endpoint_subnet_id
-  storage_private_dns_zone_id  = module.networking.storage_private_dns_zone_id
-  tags                         = local.common_tags
+  source                      = "../../modules/storage"
+  resource_group_name         = azurerm_resource_group.main.name
+  location                    = var.location
+  environment                 = var.environment
+  private_endpoint_subnet_id  = module.networking.private_endpoint_subnet_id
+  storage_private_dns_zone_id = module.networking.storage_private_dns_zone_id
+  allowed_ip                  = var.allowed_ip
+  tags                        = local.common_tags
 }
 
 module "postgresql" {
-  source                          = "../../modules/postgresql"
-  resource_group_name             = azurerm_resource_group.main.name
-  location                        = var.location
-  environment                     = var.environment
-  postgresql_password             = var.postgresql_password
-  postgresql_subnet_id            = module.networking.private_endpoint_subnet_id
-  postgresql_private_dns_zone_id  = module.networking.postgresql_private_dns_zone_id
-  tags                            = local.common_tags
+  source              = "../../modules/postgresql"
+  resource_group_name = azurerm_resource_group.main.name
+  location            = var.postgresql_location
+  environment         = var.environment
+  postgresql_password = var.postgresql_password
+  allowed_ip          = var.allowed_ip
+  tags                = local.common_tags
 }
 
 module "aks" {
-  source                     = "../../modules/aks"
-  resource_group_name        = azurerm_resource_group.main.name
-  location                   = var.location
-  environment                = var.environment
-  aks_subnet_id              = module.networking.aks_subnet_id
-  system_node_count          = var.aks_system_node_count
-  cpu_node_min               = var.aks_cpu_node_min
-  cpu_node_max               = var.aks_cpu_node_max
-  gpu_node_min               = var.aks_gpu_node_min
-  gpu_node_max               = var.aks_gpu_node_max
-  tags                       = local.common_tags
+  source              = "../../modules/aks"
+  resource_group_name = azurerm_resource_group.main.name
+  location            = var.location
+  environment         = var.environment
+  aks_subnet_id       = module.networking.aks_subnet_id
+  system_node_count   = var.aks_system_node_count
+  cpu_node_min        = var.aks_cpu_node_min
+  cpu_node_max        = var.aks_cpu_node_max
+  gpu_node_min        = var.aks_gpu_node_min
+  gpu_node_max        = var.aks_gpu_node_max
+  tags                = local.common_tags
 }
 
 module "workload_identity" {
