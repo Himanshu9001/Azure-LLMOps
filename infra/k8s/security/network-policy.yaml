@@ -1,0 +1,62 @@
+# NetworkPolicy — restrict pod-to-pod traffic
+# Only allow explicit communication paths
+
+# RAG API can only talk to Redis and PostgreSQL
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: rag-api-network-policy
+  namespace: llmops
+spec:
+  podSelector:
+    matchLabels:
+      app: rag-api
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx    # Only ingress controller can reach RAG API
+    ports:
+    - port: 8000
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: redis             # Redis cache
+    ports:
+    - port: 6379
+  - to:
+    - namespaceSelector: {}      # PostgreSQL (external — allow all egress on 5432)
+    ports:
+    - port: 5432
+  - to:
+    - namespaceSelector: {}      # Azure OpenAI (HTTPS outbound)
+    ports:
+    - port: 443
+  - ports:                       # CoreDNS
+    - port: 53
+      protocol: UDP
+    - port: 53
+      protocol: TCP
+---
+# Airflow can only talk to PostgreSQL and ADLS Gen2
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: airflow-network-policy
+  namespace: llmops
+spec:
+  podSelector:
+    matchLabels:
+      app: airflow
+  policyTypes:
+  - Egress
+  egress:
+  - ports:
+    - port: 5432    # PostgreSQL
+    - port: 443     # ADLS Gen2, Azure services
+    - port: 53      # DNS
+      protocol: UDP

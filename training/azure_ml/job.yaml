@@ -1,0 +1,48 @@
+# Azure ML Command Job — runs train.py on GPU compute cluster
+$schema: https://azuremlschemas.azureml.io/latest/commandJob.schema.json
+
+type: command
+
+experiment_name: llmops-qlora-finetuning
+display_name: mistral-7b-docqa-qlora-v1
+description: QLoRA fine-tuning of Mistral-7B for Document Q&A
+
+# Compute target — GPU cluster (created separately)
+compute: azureml:gpu-cluster-a100
+
+# Docker environment with all dependencies
+environment: azureml:llmops-training-env:1
+
+# Code to run
+code: ../../training
+command: >-
+  python train.py
+  --config config/qlora_config.yaml
+
+# Environment variables injected at runtime
+environment_variables:
+  HF_TOKEN: ${{secrets.huggingface-token}}        # From Key Vault
+  MLFLOW_TRACKING_URI: ${{mlflow_tracking_uri}}   # Auto-injected by Azure ML
+  POSTGRES_HOST: ${{secrets.postgresql-host}}
+  POSTGRES_PASSWORD: ${{secrets.postgresql-password}}
+
+# Input data from ADLS Gen2
+inputs:
+  training_data:
+    type: uri_folder
+    path: azureml://datastores/workspaceblobstore/paths/training-data/
+
+# Output — adapter weights saved back to ADLS
+outputs:
+  model_output:
+    type: uri_folder
+    path: azureml://datastores/workspaceblobstore/paths/model-artifacts/
+
+# Resource requirements
+resources:
+  instance_type: Standard_NC24ads_A100_v4
+  instance_count: 1                              # Single GPU for QLoRA
+
+# Limits
+limits:
+  timeout: 7200                                  # 2hr max — QLoRA is fast

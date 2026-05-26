@@ -2,3 +2,13 @@ export TF_VAR_subscription_id="e56f284c-4b28-4a6a-a473-12e5eaea726e"
 export TF_VAR_postgresql_password="LlmOps@Secure2024!"
 export TF_VAR_huggingface_token="hf_placeholder"
 export TF_VAR_langfuse_secret="langfuse_placeholder"
+
+az cognitiveservices account deployment create \
+  --name llmops-openai-prod \
+  --resource-group rg-llmops-prod \
+  --deployment-name gpt-4o \
+  --model-name gpt-4o \
+  --model-version "2024-11-20" \
+  --model-format OpenAI \
+  --sku-capacity 10 \
+  --sku-name Standard

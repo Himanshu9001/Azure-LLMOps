@@ -1,0 +1,55 @@
+# Base model — pulled from HuggingFace at training time
+model:
+  name: "mistralai/Mistral-7B-Instruct-v0.3"
+  torch_dtype: "bfloat16"
+
+# QLoRA quantization config
+quantization:
+  load_in_4bit: true
+  bnb_4bit_quant_type: "nf4"           # NormalFloat4 — better than uniform INT4
+  bnb_4bit_compute_dtype: "bfloat16"   # Compute in BF16 despite 4-bit storage
+  bnb_4bit_use_double_quant: true      # Double quantization — saves ~0.4GB extra
+
+# LoRA adapter config
+lora:
+  r: 16                    # Rank — higher = more capacity, more VRAM
+  lora_alpha: 32           # Scaling = 2×r is standard
+  lora_dropout: 0.05       # Regularization
+  bias: "none"
+  task_type: "CAUSAL_LM"
+  target_modules:          # Which layers get adapters
+    - "q_proj"
+    - "k_proj"
+    - "v_proj"
+    - "o_proj"
+    - "gate_proj"           # FFN layers — include for domain adaptation
+    - "up_proj"
+    - "down_proj"
+
+# Training hyperparameters
+training:
+  output_dir: "./outputs"
+  num_train_epochs: 3
+  per_device_train_batch_size: 4
+  gradient_accumulation_steps: 4      # Effective batch = 4×4 = 16
+  learning_rate: 2.0e-4
+  lr_scheduler_type: "cosine"
+  warmup_ratio: 0.03
+  max_grad_norm: 0.3
+  weight_decay: 0.001
+  bf16: true
+  tf32: true                          # A100-specific — faster matmul
+  max_seq_length: 2048
+  packing: true                       # Pack multiple short samples into one sequence
+
+# Data
+data:
+  train_path: "s3://llmops-training-data/train.jsonl"
+  val_path: "s3://llmops-training-data/val.jsonl"
+  train_val_split: 0.1
+  seed: 42
+
+# MLflow
+mlflow:
+  experiment_name: "llmops-qlora-finetuning"
+  run_name: "mistral-7b-docqa-v1"

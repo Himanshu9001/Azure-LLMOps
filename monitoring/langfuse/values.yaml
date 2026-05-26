@@ -1,0 +1,26 @@
+# Langfuse — LLM observability (traces every RAG request end-to-end)
+# Install: helm install langfuse langfuse/langfuse
+#          --namespace monitoring --values monitoring/langfuse/values.yaml
+
+langfuse:
+  # Every request traced: query → retrieval → rerank → LLM → response
+  # Visible in Langfuse UI: latency per stage, token usage, cost
+  nextauth:
+    url: "http://langfuse.llmops.svc.cluster.local:3000"
+    secret: "langfuse_placeholder"   # Replace with real secret from Key Vault
+
+  database:
+    # Reuse existing PostgreSQL — add langfuse DB
+    url: "postgresql://llmopsadmin:LlmOps@Secure2024!@psql-llmops-prod.postgres.database.azure.com/langfuse?sslmode=require"
+
+  service:
+    type: ClusterIP
+    port: 3000
+
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "1000m"
+      memory: "1Gi"

@@ -13,3 +13,7 @@ output "fine_tuning_client_id" {
 output "ingestion_client_id" {
   value = azurerm_user_assigned_identity.ingestion.client_id
 }
+
+output "rag_api_principal_id" {
+  value = azurerm_user_assigned_identity.rag_api.principal_id
+}

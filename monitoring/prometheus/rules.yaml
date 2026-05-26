@@ -1,0 +1,71 @@
+# Prometheus alerting rules for LLMOps platform
+groups:
+- name: rag-api-alerts
+  rules:
+  - alert: RAGAPIHighLatency
+    expr: histogram_quantile(0.95, rag_request_latency_seconds_bucket) > 3
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "RAG API P95 latency > 3s — check retrieval or LLM backend"
+
+  - alert: RAGAPIErrorRate
+    expr: rate(rag_request_errors_total[5m]) / rate(rag_requests_total[5m]) > 0.05
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      summary: "RAG API error rate > 5% — immediate investigation needed"
+
+  - alert: RedisCacheHitRateLow
+    expr: rag_cache_hits_total / (rag_cache_hits_total + rag_cache_misses_total) < 0.20
+    for: 30m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Redis cache hit rate < 20% — check TTL or query distribution"
+
+- name: vllm-alerts
+  rules:
+  - alert: VLLMQueueDepthHigh
+    expr: vllm_num_requests_waiting > 20
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: "vLLM queue depth > 20 — consider scaling out GPU nodes"
+
+  - alert: VLLMGPUCacheNearFull
+    expr: vllm_gpu_cache_usage_perc > 0.90
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      summary: "vLLM KV cache > 90% — reduce max_model_len or scale out"
+
+  - alert: VLLMDown
+    expr: up{job="vllm"} == 0
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "vLLM is down — LLM router falling back to Azure OpenAI"
+
+- name: eval-regression-alerts
+  rules:
+  - alert: FaithfulnessRegression
+    expr: llmops_eval_faithfulness_score < 0.80
+    for: 1h
+    labels:
+      severity: critical
+    annotations:
+      summary: "Faithfulness dropped below 0.80 — trigger re-evaluation"
+
+  - alert: HighHallucinationRate
+    expr: llmops_eval_hallucination_score > 0.15
+    for: 1h
+    labels:
+      severity: critical
+    annotations:
+      summary: "Hallucination rate > 15% — block next deployment"

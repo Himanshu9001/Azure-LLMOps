@@ -69,7 +69,7 @@ resource "azurerm_kubernetes_cluster" "main" {
 resource "azurerm_kubernetes_cluster_node_pool" "cpu" {
   name                  = "cpu"
   kubernetes_cluster_id = azurerm_kubernetes_cluster.main.id
-  vm_size               = "Standard_DS3_v2"
+  vm_size               = "Standard_DC2s_v3"    # matches actual
   vnet_subnet_id        = var.aks_subnet_id
   enable_auto_scaling   = true
   min_count             = 0
@@ -80,6 +80,12 @@ resource "azurerm_kubernetes_cluster_node_pool" "cpu" {
   node_labels = {
     "node-type" = "cpu"
     "workload"  = "rag-serving"
+  }
+
+  # ADDED — prevents destroy on config drift
+  lifecycle {
+    prevent_destroy = true
+    ignore_changes  = [node_count, tags]
   }
 
   tags = var.tags

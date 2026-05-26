@@ -1,0 +1,56 @@
+# PodDisruptionBudget — ensure availability during node maintenance
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: rag-api-pdb
+  namespace: llmops
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: rag-api
+---
+# PodDisruptionBudget for Airflow webserver
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: airflow-webserver-pdb
+  namespace: llmops
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      component: webserver
+---
+# ResourceQuota — prevent any single team from consuming all cluster resources
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: llmops-quota
+  namespace: llmops
+spec:
+  hard:
+    requests.cpu:    "3"
+    requests.memory: "8Gi"
+    limits.cpu:      "8"
+    limits.memory:   "16Gi"
+    pods:            "20"
+---
+# LimitRange — default resource limits for pods without explicit requests
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: llmops-limits
+  namespace: llmops
+spec:
+  limits:
+  - type: Container
+    default:
+      cpu:    "500m"
+      memory: "512Mi"
+    defaultRequest:
+      cpu:    "100m"
+      memory: "128Mi"
+    max:
+      cpu:    "2"
+      memory: "4Gi"

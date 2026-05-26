@@ -1,0 +1,28 @@
+$schema: https://azuremlschemas.azureml.io/latest/environment.schema.json
+
+name: llmops-training-env
+version: 1
+description: QLoRA fine-tuning environment
+
+# Base image — NVIDIA CUDA + Python
+image: mcr.microsoft.com/azureml/curated/acpt-pytorch-2.2-cuda12.1:latest
+
+conda_file:
+  name: llmops-training
+  channels:
+    - defaults
+    - conda-forge
+  dependencies:
+    - python=3.11
+    - pip:
+      - torch==2.2.0
+      - transformers==4.40.0
+      - peft==0.10.0               # LoRA implementation
+      - trl==0.8.6                 # SFTTrainer
+      - bitsandbytes==0.43.1       # 4-bit quantization
+      - accelerate==0.29.3         # Multi-GPU + gradient checkpointing
+      - datasets==2.19.0
+      - mlflow==2.13.0
+      - psycopg2-binary==2.9.9
+      - sentencepiece==0.2.0
+      - scipy==1.13.0

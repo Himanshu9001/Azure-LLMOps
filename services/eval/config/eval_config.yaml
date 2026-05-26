@@ -1,0 +1,28 @@
+# Evaluation thresholds — model must pass ALL to promote to Staging
+thresholds:
+  faithfulness:      0.85   # Answer grounded in retrieved context
+  answer_relevancy:  0.80   # Answer addresses the question asked
+  context_precision: 0.75   # Retrieved chunks are actually relevant
+  context_recall:    0.70   # Important chunks were not missed
+
+# Eval dataset
+dataset:
+  path: "eval-datasets/golden_qa.jsonl"   # ADLS Gen2 eval-datasets container
+  min_samples: 50                          # Fail if dataset too small
+
+# Azure OpenAI judge — used by RAGAS to score answers
+judge:
+  endpoint: ""    # Set via env AZURE_OPENAI_ENDPOINT
+  deployment: "gpt-4o-mini"
+  api_version: "2024-02-01"
+  embedding_deployment: "text-embedding-3-small"
+
+# MLflow
+mlflow:
+  experiment_name: "llmops-evaluation"
+  tracking_uri: ""    # Set via env MLFLOW_TRACKING_URI
+
+# RAG API endpoint to evaluate
+rag_api:
+  endpoint: "http://rag-api-service.llmops.svc.cluster.local/api/v1"
+  timeout_sec: 30

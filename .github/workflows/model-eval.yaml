@@ -1,0 +1,59 @@
+# Triggered after fine-tuning — runs eval gate before model promotion
+name: Model Eval Gate
+
+on:
+  workflow_dispatch:
+    inputs:
+      model_version:
+        description: "MLflow model version to evaluate"
+        required: true
+      mlflow_run_id:
+        description: "MLflow run ID from training"
+        required: true
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          client-id:       ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id:       ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Get AKS credentials
+        run: |
+          az aks get-credentials \
+            --resource-group rg-llmops-prod \
+            --name aks-llmops-prod
+
+      - name: Run evaluation job on AKS
+        run: |
+          kubectl run eval-job \
+            --image=acrllmopsprod.azurecr.io/eval:latest \
+            --restart=Never \
+            --namespace=llmops \
+            --env="MODEL_VERSION=${{ inputs.model_version }}" \
+            --env="MLFLOW_RUN_ID=${{ inputs.mlflow_run_id }}" \
+            -- python harness/eval_runner.py
+
+      - name: Wait for eval completion
+        run: |
+          kubectl wait pod/eval-job \
+            --for=condition=Ready \
+            --timeout=1800s \
+            --namespace=llmops
+
+      - name: Check eval result
+        run: |
+          EXIT_CODE=$(kubectl get pod eval-job -n llmops \
+            -o jsonpath='{.status.containerStatuses[0].state.terminated.exitCode}')
+          kubectl delete pod eval-job -n llmops
+          if [ "$EXIT_CODE" != "0" ]; then
+            echo "Eval gate FAILED — model not promoted"
+            exit 1
+          fi
+          echo "Eval gate PASSED — model promoted to Staging"

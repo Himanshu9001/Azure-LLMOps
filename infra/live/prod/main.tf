@@ -29,7 +29,10 @@ provider "azurerm" {
       prevent_deletion_if_contains_resources = true
     }
   }
-  subscription_id                 = var.subscription_id
+  subscription_id = var.subscription_id
+
+  # ADDED — safety flag, never destroy running AKS node pools
+  skip_provider_registration = false
 }
 
 provider "azuread" {}
@@ -121,5 +124,17 @@ module "workload_identity" {
   storage_account_id  = module.storage.storage_account_id
   key_vault_id        = module.keyvault.key_vault_id
   aks_oidc_issuer_url = module.aks.oidc_issuer_url
+  tags                = local.common_tags
+}
+
+# ADDED: Phase 4 — Azure OpenAI
+module "openai" {
+  source              = "../../modules/openai"
+  resource_group_name = azurerm_resource_group.main.name
+  location            = "eastus"          # OpenAI available in eastus
+  environment         = var.environment
+  key_vault_id        = module.keyvault.key_vault_id
+  key_vault_access_policy_id = module.keyvault.access_policy_id  # explicit dep
+  rag_api_principal_id = module.workload_identity.rag_api_principal_id
   tags                = local.common_tags
 }

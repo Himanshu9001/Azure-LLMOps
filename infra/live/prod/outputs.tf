@@ -32,3 +32,7 @@ output "vllm_client_id" {
   description = "Annotate vllm-sa Kubernetes ServiceAccount with this"
   value       = module.workload_identity.vllm_client_id
 }
+
+output "openai_endpoint" {
+  value = module.openai.openai_endpoint
+}
