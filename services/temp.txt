@@ -12,3 +12,52 @@ az cognitiveservices account deployment create \
   --model-format OpenAI \
   --sku-capacity 10 \
   --sku-name Standard
+
+  # Create a custom CoreDNS override ConfigMap
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: coredns-custom
+  namespace: kube-system
+data:
+  override.server: |
+    .:53 {
+        forward . 168.63.129.16
+    }
+EOF
+
+# Restart CoreDNS to pick up custom config
+kubectl rollout restart deployment coredns -n kube-system
+sleep 15
+
+# Test DNS
+kubectl run dns-test \
+  --image=busybox \
+  --restart=Never \
+  --namespace=llmops \
+  --overrides='{"spec":{"nodeSelector":{"node-type":"cpu"}}}' \
+  -- nslookup llmops-openai-prod-33115.openai.azure.com
+
+sleep 10
+kubectl logs dns-test -n llmops
+kubectl delete pod dns-test -n llmops
+
+# Create standard storage account for Azure ML (no HNS)
+az storage account create \
+  --name stllmopsml \
+  --resource-group rg-llmops-prod \
+  --location eastus \
+  --sku Standard_LRS \
+  --kind StorageV2 \
+  --allow-blob-public-access false \
+  --min-tls-version TLS1_2
+
+# Now create workspace with new storage account
+az ml workspace create \
+  --name llmops-ml-workspace \
+  --resource-group rg-llmops-prod \
+  --location eastus \
+  --storage-account /subscriptions/e56f284c-4b28-4a6a-a473-12e5eaea726e/resourceGroups/rg-llmops-prod/providers/Microsoft.Storage/storageAccounts/stllmopsml \
+  --key-vault /subscriptions/e56f284c-4b28-4a6a-a473-12e5eaea726e/resourceGroups/rg-llmops-prod/providers/Microsoft.KeyVault/vaults/kv-llmops-prod \
+  --container-registry /subscriptions/e56f284c-4b28-4a6a-a473-12e5eaea726e/resourceGroups/rg-llmops-prod/providers/Microsoft.ContainerRegistry/registries/acrllmopsprod
