@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rag-api
+  namespace: llmops
+  labels:
+    app: rag-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rag-api
+  template:
+    metadata:
+      labels:
+        app: rag-api
+        azure.workload.identity/use: "true"  # Required for Workload Identity token injection
+    spec:
+      serviceAccountName: rag-api-sa
+
+      # CPU node pool — GPU reserved for vLLM/fine-tuning
+      nodeSelector:
+        node-type: cpu
+
+      containers:
+      - name: rag-api
+        image: acrllmopsprod.azurecr.io/rag-api:latest
+        ports:
+        - containerPort: 8000
+
+        env:
+        - name: POSTGRES_HOST
+          valueFrom:
+            secretKeyRef:
+              name: ingestion-secrets   # Reuse existing secret
+              key: POSTGRES_HOST
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: ingestion-secrets
+              key: POSTGRES_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: ingestion-secrets
+              key: POSTGRES_PASSWORD
+        - name: REDIS_HOST
+          value: "redis-service.llmops.svc.cluster.local"
+        - name: VLLM_ENDPOINT
+          value: "http://vllm-service.llmops.svc.cluster.local:8000/v1"
+        - name: AZURE_CLIENT_ID
+          value: "87c2c4e4-3998-4798-a9fa-1d22dc63c49a"
+
+        resources:
+          requests:
+            cpu: "500m"
+            memory: "1Gi"
+          limits:
+            cpu: "2000m"
+            memory: "4Gi"   # sentence-transformers + cross-encoder loaded in memory
+
+        readinessProbe:
+          httpGet:
+            path: /api/v1/health
+            port: 8000
+          initialDelaySeconds: 30   # Models warm up at startup
+          periodSeconds: 10
+
+        livenessProbe:
+          httpGet:
+            path: /api/v1/health
+            port: 8000
+          initialDelaySeconds: 60
+          periodSeconds: 30

@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: rag-api-service
+  namespace: llmops
+spec:
+  selector:
+    app: rag-api
+  ports:
+  - port: 80
+    targetPort: 8000
+    protocol: TCP
+  type: ClusterIP  # Internal only — expose via Ingress/ALB in Phase 10
